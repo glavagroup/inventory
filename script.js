@@ -1,69 +1,91 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const googleSheetId = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy5i4lDWcfnBZmb35uSlgEn3H25iqcfAH_duuVy86SSDiQmjDj2bbUvPs8N9luDpUkDS_N2BrOFqxT/pub?output=csv'; // Replace with your Google Sheet ID
-    const sheetName = 'Sheet1'; // Replace with your sheet name if different
-    const range = 'A:Z'; // Adjust the range to cover all your data columns
-
-
+    // --- CONFIGURATION ---
+    const googleSheetId = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy5i4lDWcfnBZmb35uSlgEn3H25iqcfAH_duuVy86SSDiQmjDj2bbUvPs8N9luDpUkDS_N2BrOFqxT/pub?output=csv'; // <--- PASTE YOUR GOOGLE SHEET ID HERE
+    const sheetName = 'Sheet1'; // <--- ENSURE THIS MATCHES YOUR SHEET TAB NAME EXACTLY (case-sensitive)
+    
+    // Construct the Google Visualization API URL for JSON output
+    // This endpoint requires the sheet to be "Published to the web" and/or "Shared with anyone with the link"
     const googleSheetUrl = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
 
+    // --- DOM ELEMENTS ---
     const carCardsContainer = document.getElementById('car-cards-container');
     const carModal = document.getElementById('car-modal');
     const imageModal = document.getElementById('image-modal');
     const fullImage = document.getElementById('full-image');
     const closeButtons = document.querySelectorAll('.close-button, .image-close-button');
 
-    // Fetch data from Google Sheet
+    // --- FETCH CAR DATA ---
     async function fetchCarData() {
+        console.log('Attempting to fetch data from:', googleSheetUrl);
         try {
             const response = await fetch(googleSheetUrl);
-            const text = await response.text();
             
+            // Check for HTTP errors (e.g., 404, 403, 500)
+            if (!response.ok) {
+                console.error(`HTTP error! status: ${response.status}`);
+                throw new Error(`Failed to fetch data: HTTP status ${response.status}`);
+            }
+
+            const text = await response.text();
+            console.log('Raw response text:', text.substring(0, 500) + '...'); // Log first 500 chars
+
+            // The Google Sheet API returns JSON wrapped in a function call: "google.visualization.Query.setResponse(...)"
+            // We need to extract the raw JSON string.
             const jsonString = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
             const data = JSON.parse(jsonString);
+            console.log('Parsed JSON data:', data);
 
-            // Extract rows and column headers
+            // Extract column headers and rows
             const columns = data.table.cols.map(col => col.label);
             const rows = data.table.rows;
+            console.log('Columns:', columns);
+            console.log('Rows:', rows);
 
             const cars = rows.map(row => {
                 const car = {};
+                // Iterate through cells and map to column headers
                 row.c.forEach((cell, index) => {
-                    // Use lowercase column names for consistent JavaScript property access
-                    const columnName = columns[index].toLowerCase(); 
+                    const columnName = columns[index].toLowerCase().trim(); // Ensure lowercase and no extra spaces
                     if (cell && cell.v !== undefined) {
-                        car[columnName] = cell.v;
+                        car[columnName] = String(cell.v).trim(); // Store as string and trim whitespace
                     } else {
-                        car[columnName] = ''; // Ensure all keys exist, even if empty
+                        car[columnName] = ''; // Ensure all keys exist, even if value is empty
                     }
                 });
                 return car;
-            });
-            
+            }).filter(car => car.make && car.model); // Only include cars with at least a make and model
+
+            console.log('Processed car objects:', cars);
             displayCarCards(cars);
+
+            if (cars.length === 0) {
+                carCardsContainer.innerHTML = '<p>No car data found or all rows are empty after processing. Please check your sheet data.</p>';
+            }
+
         } catch (error) {
-            console.error('Error fetching car data:', error);
-            carCardsContainer.innerHTML = '<p>Failed to load car data. Please check your Google Sheet ID and sharing settings.</p>';
+            console.error('Error fetching or parsing car data:', error);
+            carCardsContainer.innerHTML = `<p>Failed to load car data. Please check your Google Sheet ID, sharing settings, and console for errors.</p><p>Error: ${error.message}</p>`;
         }
     }
 
-    // Display car cards
+    // --- DISPLAY CAR CARDS ---
     function displayCarCards(cars) {
         carCardsContainer.innerHTML = ''; // Clear previous cards
         cars.forEach(car => {
             const card = document.createElement('div');
             card.classList.add('car-card');
-            card.dataset.car = JSON.stringify(car); // Store full car data for modal
-
-            // Use the 'image' column for the cover photo
-            const coverPhotoUrl = car.image ? car.image.split(';')[0].trim() : 'https://via.placeholder.com/300x200?text=No+Image';
+            
+            // Use 'image' column for the cover photo. Fallback to placeholder if not available.
+            const coverPhotoUrl = car.image && car.image.split(';')[0].trim() 
+                                ? car.image.split(';')[0].trim() 
+                                : 'https://via.placeholder.com/300x200?text=No+Image';
 
             card.innerHTML = `
-                <img src="${coverPhotoUrl}" alt="${car.make || ''} ${car.model || 'Car'}" class="car-card-image">
+                <img src="${coverPhotoUrl}" alt="${car.make || ''} ${car.model || 'Car'}" class="car-card-image" loading="lazy">
                 <div class="car-card-info">
                     <h3>${car.make || ''} ${car.model || ''}</h3>
                     <p>Year: ${car.year || 'N/A'}</p>
                     <p>Price: ${car.price ? `$${car.price}` : 'N/A'}</p>
-                    <!-- Add more fields from your sheet if you want them on the card itself -->
                 </div>
             `;
             card.addEventListener('click', () => openCarModal(car));
@@ -71,7 +93,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Open car details modal
+    // --- OPEN CAR DETAILS MODAL ---
     function openCarModal(car) {
         document.getElementById('modal-car-title').textContent = `${car.make || ''} ${car.model || ''}`;
         
@@ -80,71 +102,4 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>Price:</strong> ${car.price ? `$${car.price}` : 'N/A'}</p>
             <p><strong>Transmission:</strong> ${car.transmission || 'N/A'}</p>
             <p><strong>Fuel Type:</strong> ${car['fuel type'] || 'N/A'}</p>
-            <p><strong>Year:</strong> ${car.year || 'N/A'}</p>
-            <p><strong>Mileage:</strong> ${car.mileage || 'N/A'}</p>
-            <p><strong>Exterior Color:</strong> ${car['exterior color'] || 'N/A'}</p>
-            <p><strong>Interior:</strong> ${car.interior || 'N/A'}</p>
-            <p><strong>Features:</strong> ${car.features || 'N/A'}</p>
-            <p><strong>Description:</strong> ${car.description || 'No description available.'}</p>
-        `;
-
-        const galleryContainer = document.getElementById('modal-gallery');
-        galleryContainer.innerHTML = ''; // Clear previous gallery images
-
-        // Combine cover image and gallery images
-        let allGalleryImages = [];
-        if (car.image) {
-            allGalleryImages.push(car.image.split(';')[0].trim()); // Add the cover image
-        }
-        if (car.gallery) {
-            const splitGallery = car.gallery.split(';').map(url => url.trim()).filter(url => url);
-            allGalleryImages = [...new Set([...allGalleryImages, ...splitGallery])]; // Add unique gallery images
-        }
-        
-        if (allGalleryImages.length > 0) {
-            allGalleryImages.forEach(imageUrl => {
-                const img = document.createElement('img');
-                img.src = imageUrl;
-                img.alt = `Gallery image for ${car.make || ''} ${car.model || ''}`;
-                img.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent modal from closing if image is clicked
-                    openImageModal(imageUrl);
-                });
-                galleryContainer.appendChild(img);
-            });
-        } else {
-            galleryContainer.innerHTML = '<p>No additional gallery images.</p>';
-        }
-
-        carModal.style.display = 'block';
-    }
-
-    // Open full-screen image modal
-    function openImageModal(imageUrl) {
-        fullImage.src = imageUrl;
-        imageModal.style.display = 'block';
-    }
-
-    // Close modals
-    closeButtons.forEach(button => {
-        button.addEventListener('click', (event) => {
-            if (event.target.closest('#car-modal')) {
-                carModal.style.display = 'none';
-            } else if (event.target.closest('#image-modal')) {
-                imageModal.style.display = 'none';
-            }
-        });
-    });
-
-    // Close modals when clicking outside
-    window.addEventListener('click', (event) => {
-        if (event.target === carModal) {
-            carModal.style.display = 'none';
-        }
-        if (event.target === imageModal) {
-            imageModal.style.display = 'none';
-        }
-    });
-
-    fetchCarData();
-});
+            <p><strong>Year
