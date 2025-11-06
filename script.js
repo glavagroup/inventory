@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     const googleSheetId = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy5i4lDWcfnBZmb35uSlgEn3H25iqcfAH_duuVy86SSDiQmjDj2bbUvPs8N9luDpUkDS_N2BrOFqxT/pub?output=csv'; // Replace with your Google Sheet ID
     const sheetName = 'Sheet1'; // Replace with your sheet name if different
-    const range = 'A:Z'; // Ensure this range covers all your new columns
+    const range = 'A:Z'; // Adjust the range to cover all your data columns
+
 
     const googleSheetUrl = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:json&sheet=${sheetName}`;
 
