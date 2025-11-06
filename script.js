@@ -103,3 +103,62 @@ document.addEventListener('DOMContentLoaded', () => {
             <p><strong>Transmission:</strong> ${car.transmission || 'N/A'}</p>
             <p><strong>Fuel Type:</strong> ${car['fuel type'] || 'N/A'}</p>
             <p><strong>Year
+// --- OPEN CAR DETAILS MODAL ---
+    function openCarModal(car) {
+        document.getElementById('modal-car-title').textContent = `${car.make || ''} ${car.model || ''}`;
+        
+        const detailsContainer = document.getElementById('modal-car-details');
+        detailsContainer.innerHTML = `
+            <p><strong>Price:</strong> ${car.price ? `$${car.price}` : 'N/A'}</p>
+            <p><strong>Transmission:</strong> ${car.transmission || 'N/A'}</p>
+            <p><strong>Fuel Type:</strong> ${car['fuel type'] || 'N/A'}</p>
+            <p><strong>Year:</strong> ${car.year || 'N/A'}</p> <!-- Added missing closing </p> and content -->
+            <!-- Add more details as needed, e.g., mileage, color, description -->
+        `;
+        // Make sure you have an image gallery or single image display here
+        const modalImageGallery = document.getElementById('modal-image-gallery');
+        modalImageGallery.innerHTML = ''; // Clear previous images
+        if (car.image) {
+            const images = car.image.split(';').map(url => url.trim()).filter(url => url);
+            images.forEach(imgUrl => {
+                const img = document.createElement('img');
+                img.src = imgUrl;
+                img.alt = `${car.make || ''} ${car.model || ''}`;
+                img.classList.add('modal-thumbnail');
+                img.addEventListener('click', () => openImageModal(imgUrl));
+                modalImageGallery.appendChild(img);
+            });
+        } else {
+            modalImageGallery.innerHTML = '<p>No additional images available.</p>';
+        }
+
+        carModal.style.display = 'block';
+    }
+
+    // --- OPEN FULL IMAGE MODAL ---
+    function openImageModal(imageUrl) {
+        fullImage.src = imageUrl;
+        imageModal.style.display = 'block';
+    }
+
+    // --- CLOSE MODALS ---
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            carModal.style.display = 'none';
+            imageModal.style.display = 'none';
+        });
+    });
+
+    // Close modals if clicked outside (optional, but good for UX)
+    window.addEventListener('click', (event) => {
+        if (event.target === carModal) {
+            carModal.style.display = 'none';
+        }
+        if (event.target === imageModal) {
+            imageModal.style.display = 'none';
+        }
+    });
+
+    // Initial data fetch
+    fetchCarData();
+}); // <--- THIS CLOSES THE DOMContentLoaded event listener
