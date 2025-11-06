@@ -3,23 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Information Fetcher</title>
+    <title>Car Showroom</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
-        <h1>Car Inventory</h1>
-        <p>Fetching car details from Google Sheets</p>
-    </header>
-
-    <main id="car-container">
+    <h1>Our Car Collection</h1>
+    <div id="car-cards-container">
         <!-- Car cards will be loaded here by JavaScript -->
-        <p>Loading car information...</p>
-    </main>
+    </div>
 
-    <footer>
-        <p>&copy; 2023 Car Fetcher</p>
-    </footer>
+    <!-- The Modal for full-screen car details -->
+    <div id="car-modal" class="modal">
+        <span class="close-button">&times;</span>
+        <div class="modal-content">
+            <h2 id="modal-car-title"></h2>
+            <div id="modal-car-details"></div>
+            <div id="modal-gallery" class="modal-gallery"></div>
+        </div>
+    </div>
+
+    <!-- The Image Modal for full-screen image viewing -->
+    <div id="image-modal" class="image-modal">
+        <span class="image-close-button">&times;</span>
+        <img class="image-modal-content" id="full-image">
+    </div>
 
     <script src="script.js"></script>
 </body>
