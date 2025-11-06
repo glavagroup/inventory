@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // --- CONFIGURATION ---
-    const googleSheetId = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy5i4lDWcfnBZmb35uSlgEn3H25iqcfAH_duuVy86SSDiQmjDj2bbUvPs8N9luDpUkDS_N2BrOFqxT/pub?output=csv'; // <--- PASTE YOUR GOOGLE SHEET ID HERE
+    const googleSheetId = 'e/2PAC-1vTy5i4lDWcfnBZmb35uSlgEn3H25iqcfAH_duuVy86SSDiQmjDj2bbUvPs8N9luDpUkDS_N2BrOFqxT'; // <--- PASTE YOUR GOOGLE SHEET ID HERE
     const sheetName = 'Sheet1'; // <--- ENSURE THIS MATCHES YOUR SHEET TAB NAME EXACTLY (case-sensitive)
     
     // Construct the Google Visualization API URL for JSON output
