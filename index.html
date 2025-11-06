@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Inventory</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Our Car Inventory</h1>
+    </header>
+
+    <main id="car-gallery">
+        <!-- Car cards will be dynamically inserted here by script.js -->
+        <p id="loading-message">Loading car data...</p>
+        <p id="error-message" class="hidden">Failed to load car data. Please check the sheet URL or try again later.</p>
+    </main>
+
+    <!-- The Modal Structure -->
+    <div id="car-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <div class="modal-body">
+                <div class="modal-image-gallery">
+                    <img id="modal-main-image" src="" alt="Car Image" class="main-image">
+                    <div class="image-navigation">
+                        <button class="nav-arrow left-arrow">&#10094;</button>
+                        <button class="nav-arrow right-arrow">&#10095;</button>
+                    </div>
+                    <div id="modal-thumbnails" class="thumbnails">
+                        <!-- Thumbnails will be dynamically inserted here -->
+                    </div>
+                </div>
+                <div class="modal-details">
+                    <h2 id="modal-make-model"></h2>
+                    <p><strong>Year:</strong> <span id="modal-year"></span></p>
+                    <p><strong>Price:</strong> <span id="modal-price"></span></p>
+                    <p><strong>Mileage:</strong> <span id="modal-mileage"></span></p>
+                    <p><strong>Transmission:</strong> <span id="modal-transmission"></span></p>
+                    <p><strong>Fuel Type:</strong> <span id="modal-fuel-type"></span></p>
+                    <p><strong>Exterior Color:</strong> <span id="modal-exterior-color"></span></p>
+                    <p><strong>Features:</strong> <span id="modal-features"></span></p>
+                    <p><strong>Interior:</strong> <span id="modal-interior"></span></p>
+                    <p class="modal-description"><strong>Description:</strong> <span id="modal-description"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
