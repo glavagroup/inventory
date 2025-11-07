@@ -1,159 +1,113 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f4f4f4;
-    color: #333;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const CAR_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSOVAB4idBjItPEOwxQvOGM4dAaYeWBuY49qlllo9bo-YW11K2e9wHLo3Ul8RKwiswKanQ29XbSMbZ8/pub?gid=0&single=true&output=csv; // *** IMPORTANT: Replace with your actual JSON URL ***
+    const carListContainer = document.getElementById('car-list-container');
+    const loadingMessage = document.getElementById('loading-message');
+    const carModal = document.getElementById('car-modal');
+    const closeModalButton = document.querySelector('.close-button');
 
-h1 {
-    text-align: center;
-    color: #0056b3;
-}
+    // Modal elements
+    const modalMakeModel = document.getElementById('modal-make-model');
+    const modalYear = document.getElementById('modal-year');
+    const modalPrice = document.getElementById('modal-price');
+    const modalTransmission = document.getElementById('modal-transmission');
+    const modalFuelType = document.getElementById('modal-fuel-type');
+    const modalMileage = document.getElementById('modal-mileage');
+    const modalExteriorColor = document.getElementById('modal-exterior-color');
+    const modalInterior = document.getElementById('modal-interior');
+    const modalDescription = document.getElementById('modal-description');
+    const modalFeatures = document.getElementById('modal-features');
+    const modalGallery = document.getElementById('modal-gallery');
 
-#car-cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px;
-}
+    async function fetchCarData() {
+        try {
+            const response = await fetch(CAR_DATA_URL);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            console.log("Fetched data:", data); // Debugging
+            loadingMessage.style.display = 'none'; // Hide loading message
+            displayCars(data);
+        } catch (error) {
+            console.error('Error fetching car data:', error);
+            loadingMessage.textContent = 'Failed to load car data. Please try again later.';
+        }
+    }
 
-.car-card {
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s ease-in-out;
-}
+    function displayCars(cars) {
+        if (!Array.isArray(cars) || cars.length === 0) {
+            carListContainer.innerHTML = '<p>No cars found.</p>';
+            return;
+        }
 
-.car-card:hover {
-    transform: translateY(-5px);
-}
+        cars.forEach(car => {
+            const carCard = document.createElement('div');
+            carCard.classList.add('car-card');
 
-.car-card-image {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    display: block;
-}
+            // Set a default image if none is provided or invalid
+            const imageUrl = car.Image && car.Image.startsWith('http') ? car.Image : 'https://via.placeholder.com/300x200?text=No+Image';
 
-.car-card-info {
-    padding: 15px;
-}
+            carCard.innerHTML = `
+                <img src="${imageUrl}" alt="${car.Make} ${car.Model}">
+                <div class="card-content">
+                    <h2>${car.Make} ${car.Model}</h2>
+                    <p><strong>Year:</strong> ${car.Year}</p>
+                    <p><strong>Mileage:</strong> ${car.Mileage}</p>
+                    <p class="price">${car.Price}</p>
+                </div>
+            `;
+            carCard.addEventListener('click', () => openCarModal(car));
+            carListContainer.appendChild(carCard);
+        });
+    }
 
-.car-card-info h3 {
-    margin-top: 0;
-    color: #007bff;
-}
+    function openCarModal(car) {
+        modalMakeModel.textContent = `${car.Make} ${car.Model}`;
+        modalYear.textContent = car.Year;
+        modalPrice.textContent = car.Price;
+        modalTransmission.textContent = car.Transmission || 'N/A';
+        modalFuelType.textContent = car['Fuel type'] || 'N/A'; // Access with bracket notation for 'Fuel type'
+        modalMileage.textContent = car.Mileage;
+        modalExteriorColor.textContent = car['Exterior Color'] || 'N/A';
+        modalInterior.textContent = car.Interior || 'N/A';
+        modalDescription.textContent = car.Description || 'No description available.';
+        modalFeatures.textContent = car.Features || 'No features listed.';
 
-/* Modal Styling */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
-    left: 0;
-    top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
-}
+        // Clear previous gallery images
+        modalGallery.innerHTML = '';
 
-.modal-content {
-    background-color: #fefefe;
-    margin: 5% auto; /* 5% from the top and centered */
-    padding: 30px;
-    border-radius: 10px;
-    width: 80%; /* Could be more or less, depending on screen size */
-    max-width: 900px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-    position: relative;
-    animation: fadeIn 0.3s;
-}
+        // Handle gallery images
+        if (car.Gallery) {
+            const galleryImages = car.Gallery.split(';').map(link => link.trim()).filter(link => link.startsWith('http'));
+            if (galleryImages.length > 0) {
+                galleryImages.forEach(imgLink => {
+                    const img = document.createElement('img');
+                    img.src = imgLink;
+                    img.alt = `${car.Make} ${car.Model} gallery image`;
+                    modalGallery.appendChild(img);
+                });
+            } else {
+                modalGallery.innerHTML = '<p>No additional gallery images available.</p>';
+            }
+        } else {
+            modalGallery.innerHTML = '<p>No additional gallery images available.</p>';
+        }
 
-.close-button {
-    color: #aaa;
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    font-size: 35px;
-    font-weight: bold;
-    cursor: pointer;
-}
+        carModal.style.display = 'block'; // Show the modal
+    }
 
-.close-button:hover,
-.close-button:focus {
-    color: #333;
-    text-decoration: none;
-    cursor: pointer;
-}
+    function closeCarModal() {
+        carModal.style.display = 'none'; // Hide the modal
+    }
 
-.modal-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 10px;
-    margin-top: 20px;
-}
+    // Event listeners for closing the modal
+    closeModalButton.addEventListener('click', closeCarModal);
+    window.addEventListener('click', (event) => {
+        if (event.target === carModal) {
+            closeCarModal();
+        }
+    });
 
-.modal-gallery img {
-    width: 100%;
-    height: 120px;
-    object-fit: cover;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.modal-gallery img:hover {
-    transform: scale(1.05);
-}
-
-/* Image Modal for full-screen viewing */
-.image-modal {
-    display: none;
-    position: fixed;
-    z-index: 2000; /* Higher than car modal */
-    padding-top: 100px;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.9);
-}
-
-.image-modal-content {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-    animation: zoomIn 0.3s;
-}
-
-.image-close-button {
-    position: absolute;
-    top: 15px;
-    right: 35px;
-    color: #f1f1f1;
-    font-size: 40px;
-    font-weight: bold;
-    transition: 0.3s;
-    cursor: pointer;
-}
-
-.image-close-button:hover,
-.image-close-button:focus {
-    color: #bbb;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-@keyframes fadeIn {
-    from {opacity: 0;}
-    to {opacity: 1;}
-}
-
-@keyframes zoomIn {
-    from {transform: scale(0.8);}
-    to {transform: scale(1);}
-}
+    // Initial data fetch
+    fetchCarData();
+});

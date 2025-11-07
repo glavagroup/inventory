@@ -3,29 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Showroom</title>
+    <title>Car Inventory - Your Site</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Our Car Collection</h1>
-    <div id="car-cards-container">
-        <!-- Car cards will be loaded here by JavaScript -->
-    </div>
+    <header>
+        <h1>Our Vehicle Selection</h1>
+        <p>Find your next car with us!</p>
+    </header>
 
-    <!-- The Modal for full-screen car details -->
+    <main id="car-list-container">
+        <!-- Car cards will be dynamically loaded here -->
+        <div id="loading-message">Loading cars...</div>
+    </main>
+
+    <!-- The Modal for detailed car view -->
     <div id="car-modal" class="modal">
-        <span class="close-button">&times;</span>
         <div class="modal-content">
-            <h2 id="modal-car-title"></h2>
-            <div id="modal-car-details"></div>
-            <div id="modal-gallery" class="modal-gallery"></div>
-        </div>
-    </div>
+            <span class="close-button">&times;</span>
+            <h2 id="modal-make-model"></h2>
+            <p><strong>Year:</strong> <span id="modal-year"></span></p>
+            <p><strong>Price:</strong> <span id="modal-price"></span></p>
+            <p><strong>Transmission:</strong> <span id="modal-transmission"></span></p>
+            <p><strong>Fuel Type:</strong> <span id="modal-fuel-type"></span></p>
+            <p><strong>Mileage:</strong> <span id="modal-mileage"></span></p>
+            <p><strong>Exterior Color:</strong> <span id="modal-exterior-color"></span></p>
+            <p><strong>Interior:</strong> <span id="modal-interior"></span></p>
+            
+            <h3>Description</h3>
+            <p id="modal-description"></p>
 
-    <!-- The Image Modal for full-screen image viewing -->
-    <div id="image-modal" class="image-modal">
-        <span class="image-close-button">&times;</span>
-        <img class="image-modal-content" id="full-image">
+            <h3>Features</h3>
+            <p id="modal-features"></p>
+
+            <h3>Image Gallery</h3>
+            <div id="modal-gallery" class="gallery-grid">
+                <!-- Gallery images will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
