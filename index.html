@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Inventory - Your Site</title>
+    <title>Our Vehicle Selection</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,15 +12,15 @@
         <p>Find your next car with us!</p>
     </header>
 
-    <main id="car-cards-container"> <!-- Changed ID here -->
-        <!-- Car cards will be dynamically loaded here -->
+    <main id="car-cards-container">
         <div id="loading-message">Loading cars...</div>
+        <!-- Car cards will be dynamically loaded here by script.js -->
     </main>
 
-    <!-- The Modal for detailed car view -->
+    <!-- Modal for detailed car view -->
     <div id="car-modal" class="modal">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
+            <span class="close-button car-modal-close">&times;</span>
             <h2 id="modal-make-model"></h2>
             <p><strong>Year:</strong> <span id="modal-year"></span></p>
             <p><strong>Price:</strong> <span id="modal-price"></span></p>
@@ -38,14 +38,14 @@
 
             <h3>Image Gallery</h3>
             <div id="modal-gallery" class="gallery-grid">
-                <!-- Gallery images will be loaded here -->
+                <!-- Gallery images will be loaded here by script.js -->
             </div>
         </div>
     </div>
 
-    <!-- Image Modal for full-screen view -->
+    <!-- Modal for full-screen image view -->
     <div id="image-modal" class="modal">
-        <span class="close-button image-close-button">&times;</span>
+        <span class="close-button image-modal-close">&times;</span>
         <img class="modal-content-image" id="full-image" src="" alt="Full-screen image">
     </div>
 

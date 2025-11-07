@@ -1,20 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Corrected Google Sheet CSV URL structure.
-    // Make sure your Google Sheet is published to web as CSV:
+    // === CONFIGURATION ===
+    // IMPORTANT: Replace this with your actual Google Sheet CSV URL.
+    // Ensure your Google Sheet is published to web as CSV:
     // File > Share > Publish to web > Select sheet > Choose 'Comma-separated values (.csv)'
     // Copy the entire URL provided. It will typically look like:
     // https://docs.google.com/spreadsheets/d/e/2PACX-1vSOVAB4idBjItPEOwxQvOGM4dAaYeWBuY49qlllo9bo-YW11K2e9wHLo3Ul8RKwiswKanQ29XbSMbZ8/pub?gid=0&single=true&output=csv
     const CAR_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSOVAB4idBjItPEOwxQvOGM4dAaYeWBuY49qlllo9bo-YW11K2e9wHLo3Ul8RKwiswKanQ29XbSMbZ8/pub?gid=0&single=true&output=csv';
 
-    const carCardsContainer = document.getElementById('car-cards-container'); // Corrected ID
+    // === DOM ELEMENT REFERENCES ===
+    const carCardsContainer = document.getElementById('car-cards-container');
     const loadingMessage = document.getElementById('loading-message');
     const carModal = document.getElementById('car-modal');
-    const imageModal = document.getElementById('image-modal'); // Added for the full-screen image modal
-    const fullImage = document.getElementById('full-image');   // Added for the full-screen image modal
-    const closeButtons = document.querySelectorAll('.close-button, .image-close-button'); // Use all close buttons
+    const imageModal = document.getElementById('image-modal');
+    const fullImage = document.getElementById('full-image');
+    
+    // Select all close buttons for both modals
+    const closeButtons = document.querySelectorAll('.car-modal-close, .image-modal-close');
 
-    // Modal elements (referencing the IDs from index.html)
-    const modalMakeModel = document.getElementById('modal-make-model'); // Corrected ID
+    // Car Detail Modal Elements
+    const modalMakeModel = document.getElementById('modal-make-model');
     const modalYear = document.getElementById('modal-year');
     const modalPrice = document.getElementById('modal-price');
     const modalTransmission = document.getElementById('modal-transmission');
@@ -26,97 +30,110 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalFeatures = document.getElementById('modal-features');
     const modalGallery = document.getElementById('modal-gallery');
 
+    // === UTILITY FUNCTIONS ===
 
-    // Function to parse CSV data
-    function parseCSV(csv) {
-        const lines = csv.split('\n');
-        // Filter out empty lines before processing
-        const nonEmptyLines = lines.filter(line => line.trim() !== '');
-
-        if (nonEmptyLines.length === 0) {
-            console.warn("CSV data is empty.");
+    // Parses CSV text into an array of car objects
+    function parseCSV(csvText) {
+        const lines = csvText.split('\n').filter(line => line.trim() !== ''); // Filter out empty lines
+        
+        if (lines.length === 0) {
+            console.warn("CSV data is empty after filtering.");
             return [];
         }
 
-        const headers = nonEmptyLines[0].split(',').map(header => header.trim());
+        const headers = lines[0].split(',').map(header => header.trim().toLowerCase().replace(/\s/g, '')); // Clean headers
         const cars = [];
 
-        for (let i = 1; i < nonEmptyLines.length; i++) {
-            const currentLine = nonEmptyLines[i].split(',');
-            if (currentLine.length === headers.length) { // Ensure line has correct number of columns
+        for (let i = 1; i < lines.length; i++) {
+            const currentLine = lines[i].split(',');
+            if (currentLine.length === headers.length) {
                 const car = {};
-                for (let j = 0; j < headers.length; j++) {
-                    // Map headers to consistent lowercase keys for easy access
-                    const key = headers[j].toLowerCase().replace(/\s/g, ''); // Remove spaces from keys too
-                    car[key] = currentLine[j].trim();
-                }
+                headers.forEach((header, index) => {
+                    car[header] = currentLine[index] ? currentLine[index].trim() : '';
+                });
                 cars.push(car);
             } else {
-                console.warn(`Skipping malformed CSV line: "${nonEmptyLines[i]}". Expected ${headers.length} columns, got ${currentLine.length}.`);
+                console.warn(`Skipping malformed CSV line: "${lines[i]}". Expected ${headers.length} columns, got ${currentLine.length}.`);
             }
         }
         return cars;
     }
 
+    // Fetches car data from the specified URL
     async function fetchCarData() {
+        if (!carCardsContainer || !loadingMessage) {
+            console.error("Critical DOM elements are missing. Cannot fetch or display data.");
+            return;
+        }
+
+        loadingMessage.textContent = 'Loading cars...'; // Reset loading message
+        loadingMessage.style.display = 'block';
+
         try {
             const response = await fetch(CAR_DATA_URL);
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // If response is not OK, try to read error message or throw generic error
+                const errorText = await response.text();
+                throw new Error(`HTTP error! Status: ${response.status}. Message: ${errorText.substring(0, 100)}...`);
             }
-            const csvText = await response.text(); // Fetch as plain text (CSV)
+            const csvText = await response.text();
             
-            // Assuming loadingMessage might be a separate element or just console output
-            if (loadingMessage) loadingMessage.style.display = 'none'; 
-
-            const cars = parseCSV(csvText); // Parse the CSV text
-            console.log("Parsed car data:", cars); // Debugging
+            const cars = parseCSV(csvText);
+            console.log("Parsed car data:", cars); // For debugging
             displayCarCards(cars);
+
         } catch (error) {
             console.error('Error fetching or parsing car data:', error);
-            if (loadingMessage) loadingMessage.textContent = 'Failed to load car data. Please check the URL and sharing settings.';
-            else if (carCardsContainer) carCardsContainer.innerHTML = '<p>Failed to load car data. Please check the URL and sharing settings.</p>';
+            loadingMessage.textContent = `Failed to load car data. Please check the URL and sharing settings of your Google Sheet. Error: ${error.message}`;
+            loadingMessage.style.color = 'red'; // Highlight error message
+            carCardsContainer.innerHTML = ''; // Clear any previous content
+        } finally {
+            // If data loaded successfully, loading message might be hidden by displayCarCards.
+            // If it failed, we want it to remain visible with the error.
+            if (loadingMessage.textContent === 'Loading cars...') {
+                loadingMessage.style.display = 'none'; // Hide if successfully loaded and no error text was set
+            }
         }
     }
 
+    // Displays car cards on the page
     function displayCarCards(cars) {
-        if (!carCardsContainer) {
-            console.error("Error: #car-cards-container not found in the DOM.");
-            return;
-        }
+        if (!carCardsContainer) return; // Safeguard
 
         if (!Array.isArray(cars) || cars.length === 0) {
-            carCardsContainer.innerHTML = '<p>No cars found.</p>';
+            carCardsContainer.innerHTML = '<p>No cars found. Check your CSV data.</p>';
+            if (loadingMessage) loadingMessage.style.display = 'none'; // Hide if no cars
             return;
         }
 
-        carCardsContainer.innerHTML = ''; // Clear existing content
+        carCardsContainer.innerHTML = ''; // Clear previous content
         cars.forEach(car => {
             const carCard = document.createElement('div');
             carCard.classList.add('car-card');
 
-            // Use 'image' (lowercase) from parsed CSV
-            const imageUrl = car.image && car.image.startsWith('http') ? car.image : 'https://via.placeholder.com/300x200?text=No+Image';
+            // Use the first image from the 'image' field, or a placeholder
+            const imageUrl = (car.image && car.image.startsWith('http')) 
+                             ? car.image.split(';')[0].trim() 
+                             : 'https://via.placeholder.com/300x200?text=No+Image';
 
             carCard.innerHTML = `
-                <img src="${imageUrl}" alt="${car.make || ''} ${car.model || 'Car'}" class="car-card-image">
+                <img src="${imageUrl}" alt="${car.make || 'Unknown'} ${car.model || 'Car'}" class="car-card-image">
                 <div class="car-card-info">
-                    <h3>${car.make || ''} ${car.model || ''}</h3>
+                    <h3>${car.make || 'Unknown'} ${car.model || ''}</h3>
                     <p>Year: ${car.year || 'N/A'}</p>
-                    <p>Price: ${car.price ? `$${car.price}` : 'N/A'}</p>
+                    <p class="price">${car.price ? `$${car.price}` : 'N/A'}</p>
                 </div>
             `;
             carCard.addEventListener('click', () => openCarModal(car));
             carCardsContainer.appendChild(carCard);
         });
+        if (loadingMessage) loadingMessage.style.display = 'none'; // Hide loading after cards are displayed
     }
 
+    // Opens the detailed car modal
     function openCarModal(car) {
-        if (!carModal) {
-            console.error("Error: #car-modal not found.");
-            return;
-        }
-        
+        if (!carModal) { console.error("Car modal element not found."); return; }
+
         // Populate modal with car data
         modalMakeModel.textContent = `${car.make || ''} ${car.model || ''}`;
         modalYear.textContent = car.year || 'N/A';
@@ -129,20 +146,20 @@ document.addEventListener('DOMContentLoaded', () => {
         modalDescription.textContent = car.description || 'No description available.';
         modalFeatures.textContent = car.features || 'No features listed.';
 
-
-        // Clear previous gallery images
+        // Clear and populate image gallery
         if (modalGallery) {
             modalGallery.innerHTML = '';
-
-            // Combine cover image and gallery images
             let allGalleryImages = [];
-            if (car.image) {
-                // Assuming the 'image' field might contain multiple URLs separated by ';'
-                allGalleryImages.push(car.image.split(';')[0].trim()); // Add the first cover image
+
+            // Add the main image if it exists and is a valid URL
+            if (car.image && car.image.startsWith('http')) {
+                allGalleryImages.push(car.image.split(';')[0].trim());
             }
+
+            // Add additional gallery images
             if (car.gallery) {
                 const splitGallery = car.gallery.split(';').map(url => url.trim()).filter(url => url.startsWith('http'));
-                allGalleryImages = [...new Set([...allGalleryImages, ...splitGallery])]; // Add unique gallery images
+                allGalleryImages = [...new Set([...allGalleryImages, ...splitGallery])]; // Ensure unique URLs
             }
             
             if (allGalleryImages.length > 0) {
@@ -151,51 +168,41 @@ document.addEventListener('DOMContentLoaded', () => {
                     img.src = imageUrl;
                     img.alt = `Gallery image for ${car.make || ''} ${car.model || ''}`;
                     img.addEventListener('click', (e) => {
-                        e.stopPropagation(); // Prevent modal from closing if image is clicked
+                        e.stopPropagation(); // Prevent car modal from closing
                         openImageModal(imageUrl);
                     });
                     modalGallery.appendChild(img);
                 });
             } else {
-                modalGallery.innerHTML = '<p>No additional gallery images.</p>';
+                modalGallery.innerHTML = '<p>No additional gallery images available.</p>';
             }
         }
 
-        carModal.style.display = 'block'; // Show the modal
+        carModal.style.display = 'block'; // Show the car detail modal
     }
 
-    // Open full-screen image modal
+    // Opens the full-screen image modal
     function openImageModal(imageUrl) {
-        if (!imageModal || !fullImage) {
-            console.error("Error: #image-modal or #full-image not found.");
-            return;
-        }
+        if (!imageModal || !fullImage) { console.error("Image modal elements not found."); return; }
         fullImage.src = imageUrl;
         imageModal.style.display = 'flex'; // Use flex to center the image
     }
 
-    // Close modals
+    // === EVENT LISTENERS ===
+
+    // Close modals using the 'x' buttons
     closeButtons.forEach(button => {
         button.addEventListener('click', (event) => {
-            event.stopPropagation(); // Prevent event from bubbling up to window
-            if (event.target.closest('#car-modal')) {
+            event.stopPropagation(); // Stop event from bubbling up to the window click listener
+            if (event.target.classList.contains('car-modal-close')) {
                 carModal.style.display = 'none';
-            } else if (event.target.closest('#image-modal')) {
+            } else if (event.target.classList.contains('image-modal-close')) {
                 imageModal.style.display = 'none';
             }
         });
     });
 
-    // Close modals when clicking outside
+    // Close modals when clicking outside their content
     window.addEventListener('click', (event) => {
         if (carModal && event.target === carModal) {
-            carModal.style.display = 'none';
-        }
-        if (imageModal && event.target === imageModal) {
-            imageModal.style.display = 'none';
-        }
-    });
-
-    // Initial data fetch
-    fetchCarData();
-});
+            carModal.style.display = 'non
