@@ -12,7 +12,7 @@
         <p>Find your next car with us!</p>
     </header>
 
-    <main id="car-list-container">
+    <main id="car-cards-container"> <!-- Changed ID here -->
         <!-- Car cards will be dynamically loaded here -->
         <div id="loading-message">Loading cars...</div>
     </main>
@@ -41,6 +41,12 @@
                 <!-- Gallery images will be loaded here -->
             </div>
         </div>
+    </div>
+
+    <!-- Image Modal for full-screen view -->
+    <div id="image-modal" class="modal">
+        <span class="close-button image-close-button">&times;</span>
+        <img class="modal-content-image" id="full-image" src="" alt="Full-screen image">
     </div>
 
     <script src="script.js"></script>

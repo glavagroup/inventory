@@ -1,113 +1,247 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const CAR_DATA_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSOVAB4idBjItPEOwxQvOGM4dAaYeWBuY49qlllo9bo-YW11K2e9wHLo3Ul8RKwiswKanQ29XbSMbZ8/pub?gid=0&single=true&output=csv; // *** IMPORTANT: Replace with your actual JSON URL ***
-    const carListContainer = document.getElementById('car-list-container');
-    const loadingMessage = document.getElementById('loading-message');
-    const carModal = document.getElementById('car-modal');
-    const closeModalButton = document.querySelector('.close-button');
+/* General Body Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
 
-    // Modal elements
-    const modalMakeModel = document.getElementById('modal-make-model');
-    const modalYear = document.getElementById('modal-year');
-    const modalPrice = document.getElementById('modal-price');
-    const modalTransmission = document.getElementById('modal-transmission');
-    const modalFuelType = document.getElementById('modal-fuel-type');
-    const modalMileage = document.getElementById('modal-mileage');
-    const modalExteriorColor = document.getElementById('modal-exterior-color');
-    const modalInterior = document.getElementById('modal-interior');
-    const modalDescription = document.getElementById('modal-description');
-    const modalFeatures = document.getElementById('modal-features');
-    const modalGallery = document.getElementById('modal-gallery');
+/* Header Styles */
+header {
+    background-color: #333;
+    color: #fff;
+    padding: 1rem 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
 
-    async function fetchCarData() {
-        try {
-            const response = await fetch(CAR_DATA_URL);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("Fetched data:", data); // Debugging
-            loadingMessage.style.display = 'none'; // Hide loading message
-            displayCars(data);
-        } catch (error) {
-            console.error('Error fetching car data:', error);
-            loadingMessage.textContent = 'Failed to load car data. Please try again later.';
-        }
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+header p {
+    margin: 0.5rem 0 0;
+    font-size: 1.1rem;
+}
+
+/* Main Content Area */
+#car-cards-container { /* Updated ID */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    padding: 20px;
+    max-width: 1200px;
+    margin: 20px auto;
+}
+
+#loading-message {
+    text-align: center;
+    grid-column: 1 / -1; /* Center across all columns */
+    font-size: 1.2rem;
+    color: #666;
+}
+
+/* Car Card Styles */
+.car-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.car-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.car-card-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    display: block;
+}
+
+.car-card-info {
+    padding: 15px;
+    flex-grow: 1; /* Allow content to grow */
+    display: flex;
+    flex-direction: column;
+}
+
+.car-card-info h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+    font-size: 1.5rem;
+}
+
+.car-card-info p {
+    margin: 5px 0;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.car-card-info .price {
+    font-weight: bold;
+    color: #28a745;
+    font-size: 1.2rem;
+    margin-top: auto; /* Push price to the bottom */
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.7); /* Black w/ opacity */
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto; /* 5% from the top and centered */
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%; /* Could be more responsive */
+    max-width: 800px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+.close-button {
+    color: #aaa;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 35px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #333;
+    text-decoration: none;
+}
+
+.modal-content h2 {
+    color: #333;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+}
+
+.modal-content p {
+    line-height: 1.6;
+    margin-bottom: 10px;
+}
+
+.modal-content strong {
+    color: #555;
+}
+
+.modal-content h3 {
+    color: #333;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+/* Gallery Grid within the modal */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.gallery-grid img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: 1px solid #ddd;
+}
+
+.gallery-grid img:hover {
+    transform: scale(1.05);
+    border-color: #007bff;
+}
+
+/* Image Modal specific styles */
+#image-modal {
+    display: none; /* Hidden by default */
+    background-color: rgba(0, 0, 0, 0.9); /* Black background with opacity */
+    align-items: center; /* Center content vertically */
+    justify-content: center; /* Center content horizontally */
+}
+
+#image-modal .image-close-button {
+    color: #fff;
+    top: 20px;
+    right: 30px;
+}
+
+#image-modal .image-close-button:hover,
+#image-modal .image-close-button:focus {
+    color: #bbb;
+}
+
+.modal-content-image {
+    margin: auto;
+    display: block;
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain; /* Ensure the whole image is visible */
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@keyframes zoom {
+    from {transform:scale(0)}
+    to {transform:scale(1)}
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #car-cards-container {
+        grid-template-columns: 1fr;
+        padding: 10px;
     }
 
-    function displayCars(cars) {
-        if (!Array.isArray(cars) || cars.length === 0) {
-            carListContainer.innerHTML = '<p>No cars found.</p>';
-            return;
-        }
-
-        cars.forEach(car => {
-            const carCard = document.createElement('div');
-            carCard.classList.add('car-card');
-
-            // Set a default image if none is provided or invalid
-            const imageUrl = car.Image && car.Image.startsWith('http') ? car.Image : 'https://via.placeholder.com/300x200?text=No+Image';
-
-            carCard.innerHTML = `
-                <img src="${imageUrl}" alt="${car.Make} ${car.Model}">
-                <div class="card-content">
-                    <h2>${car.Make} ${car.Model}</h2>
-                    <p><strong>Year:</strong> ${car.Year}</p>
-                    <p><strong>Mileage:</strong> ${car.Mileage}</p>
-                    <p class="price">${car.Price}</p>
-                </div>
-            `;
-            carCard.addEventListener('click', () => openCarModal(car));
-            carListContainer.appendChild(carCard);
-        });
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+        padding: 20px;
     }
 
-    function openCarModal(car) {
-        modalMakeModel.textContent = `${car.Make} ${car.Model}`;
-        modalYear.textContent = car.Year;
-        modalPrice.textContent = car.Price;
-        modalTransmission.textContent = car.Transmission || 'N/A';
-        modalFuelType.textContent = car['Fuel type'] || 'N/A'; // Access with bracket notation for 'Fuel type'
-        modalMileage.textContent = car.Mileage;
-        modalExteriorColor.textContent = car['Exterior Color'] || 'N/A';
-        modalInterior.textContent = car.Interior || 'N/A';
-        modalDescription.textContent = car.Description || 'No description available.';
-        modalFeatures.textContent = car.Features || 'No features listed.';
-
-        // Clear previous gallery images
-        modalGallery.innerHTML = '';
-
-        // Handle gallery images
-        if (car.Gallery) {
-            const galleryImages = car.Gallery.split(';').map(link => link.trim()).filter(link => link.startsWith('http'));
-            if (galleryImages.length > 0) {
-                galleryImages.forEach(imgLink => {
-                    const img = document.createElement('img');
-                    img.src = imgLink;
-                    img.alt = `${car.Make} ${car.Model} gallery image`;
-                    modalGallery.appendChild(img);
-                });
-            } else {
-                modalGallery.innerHTML = '<p>No additional gallery images available.</p>';
-            }
-        } else {
-            modalGallery.innerHTML = '<p>No additional gallery images available.</p>';
-        }
-
-        carModal.style.display = 'block'; // Show the modal
+    .modal-content h2 {
+        font-size: 1.5rem;
     }
 
-    function closeCarModal() {
-        carModal.style.display = 'none'; // Hide the modal
+    .modal-content h3 {
+        font-size: 1.2rem;
     }
 
-    // Event listeners for closing the modal
-    closeModalButton.addEventListener('click', closeCarModal);
-    window.addEventListener('click', (event) => {
-        if (event.target === carModal) {
-            closeCarModal();
-        }
-    });
-
-    // Initial data fetch
-    fetchCarData();
-});
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    }
+}
